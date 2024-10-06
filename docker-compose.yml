@@ -1,34 +1,44 @@
 services:
-  web:
-    image: wordpress:php8.3
+  wordpress:
+    image: bitnami/wordpress:6.6.2-debian-12-r6
     ports:
-      - 8080:80
-    restart: always
+      - 80:8080
     environment:
-      - WORDPRESS_DB_HOST=db
-      - WORDPRESS_DB_USER=wordpress
-      - WORDPRESS_DB_PASSWORD=DatabaseFTW
-      - WORDPRESS_DB_NAME=wordpress
-    # volumes:
-    #   - ./wp_data:/var/www/html
-  db:
-    # We use a mariadb image which supports both amd64 & arm64 architecture
-    image: mariadb:11.5
-    # If you really want to use MySQL, uncomment the following line
-    #image: mysql:8.0.27
-    command: '--default-authentication-plugin=mysql_native_password'
+      - ALLOW_EMPTY_PASSWORD=yes
+      - DB_HOST=mariadb
+      - DB_NAME=wordpress
+      - DB_PASSWORD=DatabaseFTW
+      - DB_USER=wordpress
+      - WORDPRESS_PASSWORD=testing123
+      - WORDPRESS_USERNAME=admin@example.com
+      - WP_DEBUG=true
+      - PHP_MAX_EXECUTION_TIME=3000
+      - PHP_MAX_INPUT_TIME=3000
+      - PHP_MAX_INPUT_VARS=3000
+      - PHP_MEMORY_LIMIT=256M
+      - PHP_POST_MAX_SIZE=2000M
+      - PHP_UPLOAD_MAX_FILESIZE=2000M
     volumes:
-      - db_data:/var/lib/mysql
-    restart: always
+      - ./wordpress_data:/bitnami/wordpress
+    depends_on:
+      - mariadb
+      
+  mariadb:
+    image: bitnami/mariadb:11.5.2-debian-12-r3
+    volumes:
+      - mariadb_data:/bitnami/mariadb/data
+      - ./bin/custom-init.sql:/docker-entrypoint-initdb.d/custom-init.sql
     environment:
-      - MYSQL_ROOT_PASSWORD=DatabaseFTW
-      - MYSQL_DATABASE=wordpress
-      - MYSQL_USER=wordpress
-      - MYSQL_PASSWORD=DatabaseFTW
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      # - MYSQL_ROOT_PASSWORD=root_password
+      - MARIADB_USER=wordpress
+      - MARIADB_DATABASE=wordpress
     expose:
       - 3306
-      - 33060
 
 volumes:
-  db_data:
-  # wp_data:
+  mariadb_data:
+    driver: local
+  wordpress_data:
+    driver: local
